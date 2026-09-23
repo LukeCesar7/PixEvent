@@ -1,0 +1,46 @@
+server:
+  port: ${PORT:3001}
+
+spring:
+  application:
+    name: pixevent-backend
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:pixevent}
+    username: ${DB_USER:pixevent}
+    password: ${DB_PASSWORD:suasenha}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      # use "validate" em produção depois de rodar o schema.sql/migração inicial uma vez.
+      ddl-auto: ${JPA_DDL_AUTO:update}
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+    open-in-view: false
+
+app:
+  base-url: ${BASE_URL:http://localhost:3001}
+  cors-origins: ${CORS_ORIGINS:}
+  admin:
+    password: ${ADMIN_PASSWORD:suasenha}
+    secret: ${ADMIN_SECRET:suasenha}
+    allow-legacy-secret: ${ALLOW_LEGACY_ADMIN_SECRET:false}
+  jwt:
+    secret: ${JWT_SECRET:dev-only-change-me}
+    expires-in: ${JWT_EXPIRES_IN:8h}
+  rate-limit:
+    api: ${RATE_LIMIT_API:120}
+    login: ${RATE_LIMIT_LOGIN:8}
+    pedido: ${RATE_LIMIT_PEDIDO:20}
+    scanner: ${RATE_LIMIT_SCANNER:80}
+  sendgrid:
+    api-key: ${SENDGRID_API_KEY:}
+    email-from: ${EMAIL_FROM:noreply@example.com}
+    email-from-name: ${EMAIL_FROM_NAME:PixEvent}
+  whatsapp:
+    numero: ${WA_NUMERO:}
