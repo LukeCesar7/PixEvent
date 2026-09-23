@@ -1,0 +1,266 @@
+{
+  "info": {
+    "name": "PixEvent Backend (Java)",
+    "description": "Coleção de testes do backend Spring Boot do PixEvent. Rode o app localmente e importe esta coleção no Postman.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:3001" },
+    { "key": "admin_token", "value": "" },
+    { "key": "pedido_id", "value": "" },
+    { "key": "qrcode_token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Público",
+      "item": [
+        {
+          "name": "Criar pedido",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Maria Teste\",\n  \"telefone\": \"81999998888\",\n  \"cpf\": \"12345678900\",\n  \"itens\": [\n    { \"produto\": \"ingresso\", \"quantidade\": 2 }\n  ]\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/pedido", "host": ["{{base_url}}"], "path": ["api", "pedido"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const body = pm.response.json();",
+                  "    if (body.id) pm.collectionVariables.set('pedido_id', body.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Status do pedido",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/pedido/{{pedido_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pedido", "{{pedido_id}}", "status"]
+            }
+          }
+        },
+        {
+          "name": "Listar mesas",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/mesas", "host": ["{{base_url}}"], "path": ["api", "mesas"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin — Autenticação",
+      "item": [
+        {
+          "name": "Login admin",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"senha\": \"COLOQUE_A_SENHA_DO_ADMIN_PASSWORD_AQUI\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/admin/login", "host": ["{{base_url}}"], "path": ["api", "admin", "login"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const body = pm.response.json();",
+                  "    if (body.token) {",
+                  "        pm.collectionVariables.set('admin_token', body.token);",
+                  "        console.log('Token salvo em {{admin_token}}');",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Admin — Pedidos",
+      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{admin_token}}" }] },
+      "item": [
+        {
+          "name": "Buscar pedidos por nome",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/pedido/buscar?nome=Maria",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pedido", "buscar"],
+              "query": [{ "key": "nome", "value": "Maria" }]
+            }
+          }
+        },
+        {
+          "name": "Listar pedidos (paginado)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/admin/pedidos?page=1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "pedidos"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "status", "value": "", "disabled": true },
+                { "key": "nome", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Pedidos pagos",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/admin/pedidos/pagos", "host": ["{{base_url}}"], "path": ["api", "admin", "pedidos", "pagos"] }
+          }
+        },
+        {
+          "name": "Buscar pedido por ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/admin/pedidos/{{pedido_id}}", "host": ["{{base_url}}"], "path": ["api", "admin", "pedidos", "{{pedido_id}}"] }
+          }
+        },
+        {
+          "name": "Confirmar pagamento manual",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/api/admin/pedidos/{{pedido_id}}/confirmar", "host": ["{{base_url}}"], "path": ["api", "admin", "pedidos", "{{pedido_id}}", "confirmar"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const body = pm.response.json();",
+                  "    if (body.qrcodeToken) pm.collectionVariables.set('qrcode_token', body.qrcodeToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ver ingresso (QR Code)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/admin/pedidos/{{pedido_id}}/ingresso", "host": ["{{base_url}}"], "path": ["api", "admin", "pedidos", "{{pedido_id}}", "ingresso"] }
+          }
+        },
+        {
+          "name": "Regenerar ingresso",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/api/admin/pedidos/{{pedido_id}}/ingresso/regenerar", "host": ["{{base_url}}"], "path": ["api", "admin", "pedidos", "{{pedido_id}}", "ingresso", "regenerar"] }
+          }
+        },
+        {
+          "name": "Editar pedido",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Maria Editada\",\n  \"telefone\": \"81999998888\",\n  \"cpf\": \"12345678900\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/admin/pedidos/{{pedido_id}}", "host": ["{{base_url}}"], "path": ["api", "admin", "pedidos", "{{pedido_id}}"] }
+          }
+        },
+        {
+          "name": "Cancelar pedido",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/api/admin/pedidos/{{pedido_id}}/cancelar", "host": ["{{base_url}}"], "path": ["api", "admin", "pedidos", "{{pedido_id}}", "cancelar"] }
+          }
+        },
+        {
+          "name": "Excluir pedido",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{base_url}}/api/admin/pedidos/{{pedido_id}}", "host": ["{{base_url}}"], "path": ["api", "admin", "pedidos", "{{pedido_id}}"] }
+          }
+        },
+        {
+          "name": "Inserir pedido manualmente",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Cadastro Manual\",\n  \"telefone\": \"81988887777\",\n  \"cpf\": \"98765432100\",\n  \"itens\": [\n    { \"produto\": \"ingresso\", \"quantidade\": 1 }\n  ]\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/admin/pedidos", "host": ["{{base_url}}"], "path": ["api", "admin", "pedidos"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin — Painel",
+      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{admin_token}}" }] },
+      "item": [
+        {
+          "name": "Métricas",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/admin/metricas", "host": ["{{base_url}}"], "path": ["api", "admin", "metricas"] }
+          }
+        },
+        {
+          "name": "Entradas (check-ins)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/admin/entradas", "host": ["{{base_url}}"], "path": ["api", "admin", "entradas"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Scanner",
+      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{admin_token}}" }] },
+      "item": [
+        {
+          "name": "Validar QR Code",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{qrcode_token}}\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/scanner/validar", "host": ["{{base_url}}"], "path": ["api", "scanner", "validar"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Webhook",
+      "item": [
+        {
+          "name": "Mercado Pago (ping)",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/webhook/mp", "host": ["{{base_url}}"], "path": ["webhook", "mp"] }
+          }
+        }
+      ]
+    }
+  ]
+}
