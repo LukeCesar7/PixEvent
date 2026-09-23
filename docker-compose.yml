@@ -1,0 +1,43 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: pixevent-postgres
+    environment:
+      POSTGRES_USER: ${DB_USER:-pixevent}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-pixevent}
+      POSTGRES_DB: ${DB_NAME:-pixevent}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pixevent-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-pixevent}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    container_name: pixevent-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-pixevent}
+      DB_USER: ${DB_USER:-pixevent}
+      DB_PASSWORD: ${DB_PASSWORD:-pixevent}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?defina ADMIN_PASSWORD no seu .env}
+      JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET no seu .env}
+      BASE_URL: ${BASE_URL:-http://localhost:3001}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3001}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-noreply@example.com}
+      WA_NUMERO: ${WA_NUMERO:-}
+      BACKUP_ON_START: "false"
+    ports:
+      - "3001:3001"
+
+volumes:
+  pixevent-db-data:
