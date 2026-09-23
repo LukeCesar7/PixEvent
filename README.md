@@ -1,5 +1,5 @@
 <img src=https://github.com/LukeCesar7/PixEvent-Backend/blob/main/hero.png>
-<h1 align="center"> JURIS </h1>
+<h1 align="center"> PixEvent </h1>
 
 ## Requisitos
 
